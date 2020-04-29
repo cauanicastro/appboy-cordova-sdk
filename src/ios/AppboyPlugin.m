@@ -14,6 +14,7 @@
   @property NSString *enableIDFACollection;
   @property NSString *enableLocationCollection;
   @property NSString *enableGeofences;
+  @property NSString *enableProvisionalPushAuthentication;
 @end
 
 @implementation AppboyPlugin
@@ -27,6 +28,7 @@
   self.enableIDFACollection = settings[@"com.appboy.ios_enable_idfa_automatic_collection"];
   self.enableLocationCollection = settings[@"com.appboy.enable_location_collection"];
   self.enableGeofences = settings[@"com.appboy.geofences_enabled"];
+  self.enableProvisionalPushAuthentication = settings[@"com.appboy.ios_provisional_push_authentication_enabled"];
 
   [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(didFinishLaunchingListener:) name:UIApplicationDidFinishLaunchingNotification object:nil];
   if (![self.disableAutomaticPushHandling isEqualToString:@"YES"]) {
@@ -67,7 +69,7 @@
         center.delegate = [UIApplication sharedApplication].delegate;
       }
       UNAuthorizationOptions options = UNAuthorizationOptionAlert | UNAuthorizationOptionSound | UNAuthorizationOptionBadge;
-      if (@available(iOS 12.0, *)) {
+      if ([self.enableProvisionalPushAuthentication isEqualToString:@"YES"] && @available(iOS 12.0, *)) {
         options = options | UNAuthorizationOptionProvisional;
       }
       [center requestAuthorizationWithOptions:options
@@ -83,6 +85,8 @@
     } else {
       [[UIApplication sharedApplication] registerForRemoteNotificationTypes: notificationSettingTypes];
     }
+  } else {
+    // TODO (handle checking if user is already registered, in which case it will just enroll him again with Braze)
   }
 }
 
@@ -91,6 +95,7 @@
   NSString *userId = [command argumentAtIndex:0 withDefault:nil];
   [[Appboy sharedInstance] changeUser:userId];
 }
+
 
 - (void)logCustomEvent:(CDVInvokedUrlCommand *)command {
   NSString *customEventName = [command argumentAtIndex:0 withDefault:nil];
