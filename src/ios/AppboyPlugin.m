@@ -85,8 +85,6 @@
     } else {
       [[UIApplication sharedApplication] registerForRemoteNotificationTypes: notificationSettingTypes];
     }
-  } else {
-    // TODO (handle checking if user is already registered, in which case it will just enroll him again with Braze)
   }
 }
 
