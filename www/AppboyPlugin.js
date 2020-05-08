@@ -399,6 +399,15 @@ AppboyPlugin.prototype.logContentCardDismissed = function (cardId) {
 	cordova.exec(null, null, "AppboyPlugin", "logContentCardDismissed", [cardId]);
 }
 
+/**
+ * ** iOS ONLY **
+ *
+ * Gets a boolean indicating if push notifications have been enabled or not for the device
+ */
+AppboyPlugin.prototype.isPushNotificationEnabled = function (successCallback, errorCallback) {
+	cordova.exec(successCallback, errorCallback, "AppboyPlugin", "isPushNotificationEnabled");
+}
+
 AppboyPlugin.prototype['NotificationSubscriptionTypes'] = {
   "OPTED_IN": 'opted_in',
   "SUBSCRIBED": 'subscribed',

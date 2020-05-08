@@ -126,6 +126,21 @@
   [[Appboy sharedInstance] flushDataAndProcessRequestQueue];
 }
 
+- (void)isPushNotificationEnabled:(CDVInvokedUrlCommand *)command {
+    if (@available(iOS 10.0, *)) {
+        UNUserNotificationCenter *center = [UNUserNotificationCenter currentNotificationCenter];
+        [center getNotificationSettingsWithCompletionHandler:^(UNNotificationSettings * _Nonnull settings) {
+            BOOL result = (settings.authorizationStatus != UNAuthorizationStatusNotDetermined);
+            [self sendCordovaSuccessPluginResultWithBool:result andCommand:command];
+        }];
+    } else {
+        UIApplication *sharedApplication = [UIApplication sharedApplication];
+        UIUserNotificationSettings *notificationSettings = [sharedApplication currentUserNotificationSettings];
+        BOOL result = !notificationSettings.types;
+        [self sendCordovaSuccessPluginResultWithBool:result andCommand:command];
+    }
+}
+
 /*-------ABKUser.h-------*/
 - (void) setFirstName:(CDVInvokedUrlCommand *)command {
   NSString *firstName = [command argumentAtIndex:0 withDefault:nil];
@@ -428,12 +443,12 @@
 
 - (void) getContentCardsFromCache:(CDVInvokedUrlCommand *)command {
   NSArray<ABKContentCard *> *cards = [[Appboy sharedInstance].contentCardsController getContentCards];
-  
+
   NSMutableArray *mappedCards = [NSMutableArray arrayWithCapacity:[cards count]];
   [cards enumerateObjectsUsingBlock:^(id card, NSUInteger idx, BOOL *stop) {
      [mappedCards addObject:[AppboyPlugin RCTFormatContentCard:card]];
   }];
-  
+
   [self sendCordovaSuccessPluginResultWithArray:mappedCards andCommand:command];
 }
 
@@ -441,17 +456,17 @@
   NSArray<ABKContentCard *> *cards = [[Appboy sharedInstance].contentCardsController getContentCards];
   NSPredicate *predicate = [NSPredicate predicateWithFormat:@"idString == %@", idString];
   NSArray *filteredArray = [cards filteredArrayUsingPredicate:predicate];
-  
+
   if (filteredArray.count) {
     return filteredArray[0];
   }
-  
+
   return nil;
 }
 
 + (NSDictionary *) RCTFormatContentCard:(ABKContentCard *)card {
   NSMutableDictionary *formattedContentCardData = [NSMutableDictionary dictionary];
-  
+
   formattedContentCardData[@"id"] = card.idString;
   formattedContentCardData[@"created"] = @(card.created);
   formattedContentCardData[@"expiresAt"] = @(card.expiresAt);
@@ -462,9 +477,9 @@
   formattedContentCardData[@"dismissible"] = @(card.dismissible);
   formattedContentCardData[@"url"] = card.urlString ?: [NSNull null];
   formattedContentCardData[@"openURLInWebView"] = @(card.openUrlInWebView);
-  
+
   formattedContentCardData[@"extras"] = [AppboyPlugin getJsonFromExtras:card.extras];
-  
+
   if ([card isKindOfClass:[ABKCaptionedImageContentCard class]]) {
     ABKCaptionedImageContentCard *captionedCard = (ABKCaptionedImageContentCard *)card;
     formattedContentCardData[@"image"] = captionedCard.image;
@@ -474,23 +489,23 @@
     formattedContentCardData[@"domain"] = captionedCard.domain ?: [NSNull null];
     formattedContentCardData[@"type"] = @"Captioned";
   }
-  
+
   if ([card isKindOfClass:[ABKBannerContentCard class]]) {
     ABKBannerContentCard *bannerCard = (ABKBannerContentCard *)card;
     formattedContentCardData[@"image"] = bannerCard.image;
     formattedContentCardData[@"imageAspectRatio"] = @(bannerCard.imageAspectRatio);
     formattedContentCardData[@"type"] = @"Banner";
   }
-  
+
   if ([card isKindOfClass:[ABKClassicContentCard class]]) {
-    ABKClassicContentCard *classicCard = (ABKClassicContentCard *)card; 
+    ABKClassicContentCard *classicCard = (ABKClassicContentCard *)card;
     formattedContentCardData[@"image"] = classicCard.image ?: [NSNull null];
     formattedContentCardData[@"title"] = classicCard.title;
     formattedContentCardData[@"cardDescription"] = classicCard.cardDescription;
     formattedContentCardData[@"domain"] = classicCard.domain ?: [NSNull null];
     formattedContentCardData[@"type"] = @"Classic";
   }
-  
+
   return formattedContentCardData;
 }
 
@@ -499,7 +514,7 @@
   NSData *jsonData = [NSJSONSerialization dataWithJSONObject:extras
                                                      options:0
                                                        error:&error];
-  
+
   if (!jsonData) {
     NSLog(@"Got an error in getJsonFromExtras: %@", error);
     return @"{}";
@@ -519,6 +534,13 @@
   pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsInt:resultMessage];
   [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
 }
+
+- (void) sendCordovaSuccessPluginResultWithBool:(BOOL)resultMessage andCommand:(CDVInvokedUrlCommand *)command {
+  CDVPluginResult *pluginResult = nil;
+  pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsBool:resultMessage];
+  [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
+}
+
 
 - (void) sendCordovaSuccessPluginResultWithArray:(NSArray *)resultMessage andCommand:(CDVInvokedUrlCommand *)command {
   CDVPluginResult *pluginResult = nil;
