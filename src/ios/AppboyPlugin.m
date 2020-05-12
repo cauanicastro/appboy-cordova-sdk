@@ -94,7 +94,6 @@
   [[Appboy sharedInstance] changeUser:userId];
 }
 
-
 - (void)logCustomEvent:(CDVInvokedUrlCommand *)command {
   NSString *customEventName = [command argumentAtIndex:0 withDefault:nil];
   NSDictionary *properties = [command argumentAtIndex:1 withDefault:nil];
@@ -126,19 +125,32 @@
   [[Appboy sharedInstance] flushDataAndProcessRequestQueue];
 }
 
-- (void)isPushNotificationEnabled:(CDVInvokedUrlCommand *)command {
-    if (@available(iOS 10.0, *)) {
-        UNUserNotificationCenter *center = [UNUserNotificationCenter currentNotificationCenter];
-        [center getNotificationSettingsWithCompletionHandler:^(UNNotificationSettings * _Nonnull settings) {
-            BOOL result = (settings.authorizationStatus != UNAuthorizationStatusNotDetermined);
-            [self sendCordovaSuccessPluginResultWithBool:result andCommand:command];
-        }];
-    } else {
-        UIApplication *sharedApplication = [UIApplication sharedApplication];
-        UIUserNotificationSettings *notificationSettings = [sharedApplication currentUserNotificationSettings];
-        BOOL result = !notificationSettings.types;
+- (void)hasUserAnsweredNotificationPrompt:(CDVInvokedUrlCommand *)command {
+    UNUserNotificationCenter *center = [UNUserNotificationCenter currentNotificationCenter];
+    [center getNotificationSettingsWithCompletionHandler:^(UNNotificationSettings * _Nonnull settings) {
+        BOOL result = (settings.authorizationStatus != UNAuthorizationStatusNotDetermined);
         [self sendCordovaSuccessPluginResultWithBool:result andCommand:command];
+    }];
+}
+
+- (void)registerPushNotification:(CDVInvokedUrlCommand *)command {
+  [self triggerPushRegistration];
+}
+
+- (void)triggerPushRegistration{
+  UNUserNotificationCenter *center = [UNUserNotificationCenter currentNotificationCenter];
+  [center getNotificationSettingsWithCompletionHandler:^(UNNotificationSettings * _Nonnull settings) {
+    UNAuthorizationOptions options = UNAuthorizationOptionAlert | UNAuthorizationOptionSound | UNAuthorizationOptionBadge;
+    if ([self.enableProvisionalPushAuthentication isEqualToString:@"YES"] && @available(iOS 12.0, *)) {
+      options = options | UNAuthorizationOptionProvisional;
     }
+    [center requestAuthorizationWithOptions:options completionHandler:^(BOOL granted, NSError * _Nullable error) {
+      [[Appboy sharedInstance] pushAuthorizationFromUserNotificationCenter:granted];
+    }];
+    center.delegate = self;
+    [center setNotificationCategories:[ABKPushUtils getAppboyUNNotificationCategorySet]];
+    [[UIApplication sharedApplication] registerForRemoteNotifications];
+  }];
 }
 
 /*-------ABKUser.h-------*/

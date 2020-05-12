@@ -402,10 +402,20 @@ AppboyPlugin.prototype.logContentCardDismissed = function (cardId) {
 /**
  * ** iOS ONLY **
  *
- * Gets a boolean indicating if push notifications have been enabled or not for the device
+ * Gets a boolean indicating if the user received and answered (allowing or not) the prompt to allow notifications
  */
-AppboyPlugin.prototype.isPushNotificationEnabled = function (successCallback, errorCallback) {
-	cordova.exec(successCallback, errorCallback, "AppboyPlugin", "isPushNotificationEnabled");
+AppboyPlugin.prototype.hasUserAnsweredNotificationPrompt = function (successCallback, errorCallback) {
+	cordova.exec(successCallback, errorCallback, "AppboyPlugin", "hasUserAnsweredNotificationPrompt");
+}
+
+/**
+ * ** iOS ONLY **
+ *
+ * If the user was never prompted, it will prompt for permission to send push notifications.
+ * This method needs to be called each time when the app starts after the user has given permission, to ensure the token in Braze is up to date.
+ */
+AppboyPlugin.prototype.registerPushNotification = function () {
+	cordova.exec(null, null, "AppboyPlugin", "registerPushNotification");
 }
 
 AppboyPlugin.prototype['NotificationSubscriptionTypes'] = {

@@ -10,7 +10,8 @@
 - (void) enableSdk:(CDVInvokedUrlCommand *)command;
 - (void) wipeData:(CDVInvokedUrlCommand *)command;
 - (void) requestImmediateDataFlush:(CDVInvokedUrlCommand *)command;
-- (void) isPushNotificationEnabled:(CDVInvokedUrlCommand *)command;
+- (void) hasUserAnsweredNotificationPrompt:(CDVInvokedUrlCommand *)command;
+- (void) registerPushNotification:(CDVInvokedUrlCommand *)command;
 
 /*-------ABKUser.h-------*/
 - (void) setFirstName:(CDVInvokedUrlCommand *)command;
